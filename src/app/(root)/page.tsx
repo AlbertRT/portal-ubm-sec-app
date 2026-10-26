@@ -15,7 +15,7 @@ export default function Home() {
                 <p className="col-span-1 text-xs">2 November 2026</p>
               </div>
               <div className="col-span-3">
-                <a href="#" className="text-blue-500 hover:underline font-bold text-sm">
+                <a href="/tugas" className="text-blue-500 hover:underline font-bold text-sm">
                   TIG13 - SECURE APPLICATIONS DEVELOPMENT
                 </a>
               </div>
