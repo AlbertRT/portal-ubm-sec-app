@@ -3,8 +3,9 @@ import "server-only";
 import {cookies} from "next/headers";
 import {jwtVerify} from "jose";
 import {pool} from "@/lib/db";
+import {Session} from "@/lib/types";
 
-export async function getSession() {
+export async function getSession(): Promise<Session | null> {
     const cookieStore = await cookies();
     const token = cookieStore.get("session")?.value;
 
@@ -41,9 +42,6 @@ export async function getSession() {
                 u.role,
                 s.nim,
                 s.full_name AS student_name,
-                s.email,
-                s.enrollment_year,
-                m.name      AS major_name,
                 l.lecturer_number,
                 l.full_name AS lecturer_name
          FROM users u
@@ -69,18 +67,17 @@ export async function getSession() {
             return null;
         }
 
-        return {
+        const session: Session = {
             id: user.id,
             username: user.username,
-            role: user.role,
+            role: "student",
             profile: {
                 nim: user.nim,
                 fullName: user.student_name,
-                email: user.email,
-                enrollmentYear: user.enrollment_year,
-                major: user.major_name,
             },
         };
+
+        return session;
     }
 
     if (user.role === "lecturer") {
@@ -88,15 +85,17 @@ export async function getSession() {
             return null;
         }
 
-        return {
+        const session: Session = {
             id: user.id,
             username: user.username,
-            role: user.role,
+            role: "lecturer",
             profile: {
                 lecturerNumber: user.lecturer_number,
                 fullName: user.lecturer_name,
             },
         };
+
+        return session;
     }
 
     return null;

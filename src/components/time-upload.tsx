@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function UploadDeadline({title, label}: { title: string, label: string }) {
+export function TimeUpload({title, label}: { title: string, label: string }) {
     const [currentDate, setCurrentDate] = useState("");
     const [currentTime, setCurrentTime] = useState("");
 
@@ -32,24 +32,17 @@ export default function UploadDeadline({title, label}: { title: string, label: s
     return (
         <div className="flex items-center gap-2">
             <label
-                htmlFor={`${title}-tanggal`}
+                htmlFor={`${title}`}
                 className="w-[150px] font-bold"
             >
                 {label}
             </label>
 
             <input
-                id={`${title}-tanggal`}
-                type="date"
-                name={`${title}-tanggal`}
+                id={`${title}`}
+                type="datetime-local"
+                name={`${title}`}
                 min={currentDate}
-                required
-            />
-
-            <input
-                type="time"
-                name={`${title}-waktu`}
-                min={currentDate ? currentTime : undefined}
                 required
             />
         </div>
