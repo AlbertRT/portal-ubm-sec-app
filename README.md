@@ -116,3 +116,48 @@ Kerentanan yang terjadi ketika aplikasi menerima file tanpa validasi jenis, ukur
 ## ⚠️ Disclaimer
 
 Proyek ini dibuat untuk tujuan edukasi dan pengujian keamanan pada lingkungan yang terkontrol. Seluruh pengujian harus dilakukan hanya pada aplikasi dan sistem yang memiliki izin pengujian.
+
+# SEC APP — Vulnerability Findings
+
+## 1. SQL Injection
+
+**Endpoint:** `/login`
+
+**Deskripsi:**  
+Proses autentikasi diduga rentan terhadap SQL Injection karena input pengguna dapat memengaruhi logika query SQL.
+
+**Temuan:**
+- Pengujian menggunakan pola `' OR '1'='1` pada input login.
+- Perlu verifikasi apakah manipulasi input dapat melewati autentikasi tanpa kredensial yang valid.
+
+**Rekomendasi mitigasi:**
+- Gunakan parameterized queries atau prepared statements.
+- Hindari menyusun query SQL secara langsung dari input pengguna.
+- Terapkan validasi input dan penanganan error yang aman.
+
+## 2. Insecure Direct Object Reference (IDOR)
+
+**Endpoint:** `/profile/{nim}`
+
+**Deskripsi:**  
+Halaman profil diduga memiliki kelemahan kontrol akses yang memungkinkan pengguna melihat data pengguna lain dengan mengganti NIM pada URL.
+
+**Temuan:**
+- Pengguna dapat mengubah parameter NIM pada URL.
+- Perlu verifikasi apakah aplikasi tetap menampilkan profil pengguna lain tanpa memeriksa hak akses.
+
+**Rekomendasi mitigasi:**
+- Verifikasi hak akses pada setiap permintaan profil.
+- Pastikan pengguna hanya dapat mengakses data yang diizinkan.
+- Terapkan pemeriksaan otorisasi di sisi server, bukan hanya menyembunyikan tautan di antarmuka.
+
+## 3. Status Pengujian
+
+| Vulnerability | Endpoint | Status |
+|---|---|---|
+| SQL Injection | `/login` | Perlu verifikasi hasil autentikasi |
+| IDOR | `/profile/{nim}` | Perlu verifikasi kontrol akses |
+
+## Catatan
+
+Dokumentasikan hasil pengujian berdasarkan respons aplikasi dan bukti yang diperoleh pada lingkungan pengujian yang memiliki izin. Hindari menyimpan password atau data pribadi pengguna lain dalam laporan.
