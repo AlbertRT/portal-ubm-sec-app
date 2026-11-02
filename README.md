@@ -31,6 +31,7 @@ Portal UBM adalah proyek tugas pengujian keamanan aplikasi web (*Web Application
 |---|---|---|
 | `32240006` | `1234` | Student |
 | `l2339` | `4567` | Lecturer |
+| `admin` | `admin` | Admin |
 
 > **Catatan:** Akun di atas digunakan untuk keperluan pengujian aplikasi dalam lingkungan yang terkontrol.
 
