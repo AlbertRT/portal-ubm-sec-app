@@ -1,6 +1,6 @@
 # Portal UBM
 
-Portal UBM adalah proyek tugas pengujian keamanan aplikasi web (*Web Application Security Testing*) dengan fokus pada identifikasi kerentanan **SQL Injection** dan **Command Injection**.
+Portal UBM adalah proyek tugas pengujian keamanan aplikasi web (*Web Application Security Testing*) dengan fokus pada identifikasi kerentanan **SQL Injection**, **Command Injection**, **Insecure Direct Object Reference (IDOR)**, dan **Broken Access Control**.
 
 ## 📌 Informasi Proyek
 
@@ -10,6 +10,7 @@ Portal UBM adalah proyek tugas pengujian keamanan aplikasi web (*Web Application
     - SQL Injection
     - Command Injection
     - Insecure Direct Object Reference (IDOR)
+    - Broken Access Control
     - Unrestricted File Upload
 
 ## 🌐 Daftar Halaman
@@ -21,6 +22,8 @@ Portal UBM adalah proyek tugas pengujian keamanan aplikasi web (*Web Application
 | `/profile` | Halaman profil pengguna |
 | `/tugas` | Halaman daftar tugas |
 | `/tugas/tambah` | Halaman penambahan tugas |
+| `/panel` | Halaman panel administratif |
+| `/panel/server` | Halaman pengujian eksekusi perintah server |
 
 ## 👥 Akun Pengujian
 
@@ -60,50 +63,147 @@ Isi kedua variabel tersebut sesuai dengan konfigurasi lingkungan pengujian.
 
 > **Catatan:** Perintah di atas menggunakan PostgreSQL dan mengasumsikan file `schema.sql` berada di direktori utama proyek serta `DATABASE_URL` sudah berisi koneksi database yang valid.
 
-## 🐛 Daftar Vulnerability
+---
 
-### 1. SQL Injection
+# 🐛 SEC APP — Vulnerability Findings
 
-**Deskripsi:**  
-Kerentanan yang dapat terjadi ketika input pengguna dimasukkan ke dalam query SQL tanpa penanganan yang aman.
+## 1. SQL Injection
 
-**Area pengujian:**
-- Autentikasi pada `/login`.
-- Pengambilan data pengguna berdasarkan parameter query.
-- Pengambilan data tugas berdasarkan input pengguna.
+**Endpoint:** `/login`
 
-**Tujuan pengujian:** Memeriksa apakah input dapat mengubah logika query SQL atau menyebabkan akses data yang tidak semestinya.
+**Deskripsi:**
 
-### 2. Command Injection
+Proses autentikasi diduga rentan terhadap SQL Injection karena input pengguna dapat memengaruhi logika query SQL.
 
-**Deskripsi:**  
-Kerentanan yang dapat terjadi ketika input pengguna diteruskan ke perintah sistem operasi tanpa validasi dan pembatasan yang memadai.
+**Temuan:**
 
-**Area pengujian:** Endpoint atau fitur yang memproses input pengguna menggunakan perintah sistem operasi.
+- Pengujian menggunakan pola `' OR '1'='1` pada input login.
+- Perlu verifikasi apakah manipulasi input dapat melewati autentikasi tanpa kredensial yang valid.
 
-**Tujuan pengujian:** Memastikan input pengguna tidak dapat memengaruhi eksekusi perintah sistem secara tidak semestinya.
+**Rekomendasi mitigasi:**
 
-### 3. Insecure Direct Object Reference (IDOR)
+- Gunakan parameterized queries atau prepared statements.
+- Hindari menyusun query SQL secara langsung dari input pengguna.
+- Terapkan validasi input dan penanganan error yang aman.
 
-**Deskripsi:**  
-Kerentanan kontrol akses yang memungkinkan pengguna mengakses data milik pengguna lain dengan memanipulasi identifier atau parameter yang digunakan untuk mengambil data.
+## 2. Command Injection
+
+**Endpoint:** `/panel/server`
+
+**Deskripsi:**
+
+Endpoint `/panel/server` menyediakan fitur eksekusi perintah sistem operasi yang memungkinkan pengguna menjalankan perintah melalui aplikasi web. Fitur ini berpotensi menimbulkan kerentanan Command Injection apabila input pengguna diteruskan ke shell tanpa validasi dan pembatasan yang memadai.
+
+**Temuan:**
+
+- Endpoint `/panel/server` memungkinkan pengguna menjalankan perintah sistem operasi melalui aplikasi web.
+- Perintah `whoami` dapat digunakan untuk mengetahui identitas pengguna yang menjalankan proses server.
+- Perintah `dir` dapat digunakan untuk menampilkan daftar direktori dan file.
+- Perintah `cd` dan `cd ..` dapat digunakan untuk berpindah direktori.
+- Perlu diperiksa apakah input tambahan dapat memanipulasi perintah yang dieksekusi oleh sistem operasi.
 
 **Skenario pengujian:**
-- Mengakses profil pengguna lain melalui parameter atau identifier.
-- Mengambil data tugas milik pengguna lain.
-- Memastikan pembatasan akses berdasarkan identitas dan role pengguna berjalan dengan benar.
 
-### 4. Unrestricted File Upload
+1. Mengakses halaman `/panel/server`.
+2. Menjalankan perintah `whoami` untuk mengidentifikasi akun sistem yang menjalankan server.
+3. Menjalankan perintah `dir` untuk melihat isi direktori aktif.
+4. Menggunakan `cd` dan `cd ..` untuk menguji perpindahan direktori.
+5. Memeriksa apakah input perintah dapat memengaruhi eksekusi perintah sistem lainnya.
 
-**Deskripsi:**  
+**Rekomendasi mitigasi:**
+
+- Hindari meneruskan input pengguna secara langsung ke shell sistem operasi.
+- Gunakan fungsi API sistem operasi yang tidak melibatkan shell apabila memungkinkan.
+- Terapkan allowlist terhadap perintah yang memang diperlukan.
+- Batasi hak akses akun sistem yang menjalankan aplikasi.
+- Terapkan validasi input dan pencatatan aktivitas eksekusi perintah.
+
+## 3. Insecure Direct Object Reference (IDOR)
+
+**Endpoint:** `/profile/{nim}`
+
+**Deskripsi:**
+
+Halaman profil diduga memiliki kelemahan kontrol akses yang memungkinkan pengguna melihat data pengguna lain dengan mengganti NIM pada URL.
+
+**Temuan:**
+
+- Pengguna dapat mengubah parameter NIM pada URL.
+- Perlu verifikasi apakah aplikasi tetap menampilkan profil pengguna lain tanpa memeriksa hak akses.
+
+**Rekomendasi mitigasi:**
+
+- Verifikasi hak akses pada setiap permintaan profil.
+- Pastikan pengguna hanya dapat mengakses data yang diizinkan.
+- Terapkan pemeriksaan otorisasi di sisi server, bukan hanya menyembunyikan tautan di antarmuka.
+
+## 4. Broken Access Control — Unauthenticated Admin Panel Access
+
+**Endpoint:**
+- `/panel`
+- `/panel/server`
+
+**Deskripsi:**
+
+Halaman panel yang seharusnya diperuntukkan bagi administrator dapat diakses oleh pengguna tanpa melalui proses autentikasi maupun verifikasi role administrator.
+
+**Temuan:**
+
+- Pengguna dapat mengakses `/panel` tanpa melakukan login sebagai administrator.
+- Pengguna dapat mengakses `/panel/server` tanpa melakukan login sebagai administrator.
+- Fitur eksekusi perintah sistem pada `/panel/server` dapat diakses tanpa verifikasi hak akses administrator.
+- Kondisi ini berpotensi memungkinkan pengguna yang tidak berwenang mengakses fungsi administratif aplikasi.
+
+**Skenario pengujian:**
+
+1. Pastikan pengguna belum melakukan login.
+2. Akses endpoint `/panel` secara langsung.
+3. Akses endpoint `/panel/server` secara langsung.
+4. Periksa apakah aplikasi tetap memberikan akses ke halaman tersebut.
+5. Ulangi pengujian menggunakan akun Student dan Lecturer untuk memeriksa pembatasan berdasarkan role.
+
+**Rekomendasi mitigasi:**
+
+- Terapkan autentikasi pada seluruh endpoint administratif.
+- Terapkan pemeriksaan role administrator di sisi server.
+- Gunakan middleware untuk memverifikasi autentikasi dan otorisasi.
+- Tolak permintaan dari pengguna yang tidak memiliki hak akses.
+- Jangan hanya mengandalkan pembatasan navigasi pada frontend.
+
+## 5. Unrestricted File Upload
+
+**Endpoint:** Fitur unggah file pada aplikasi.
+
+**Deskripsi:**
+
 Kerentanan yang terjadi ketika aplikasi menerima file tanpa validasi jenis, ukuran, konten, atau pembatasan penyimpanan yang memadai.
 
-**Area pengujian:** Fitur unggah file pada aplikasi.
-
 **Skenario pengujian:**
+
 - Memeriksa apakah aplikasi menerima berbagai jenis file tanpa pembatasan.
 - Memeriksa validasi ekstensi dan MIME type.
 - Memeriksa apakah file yang diunggah dapat dieksekusi atau diakses secara tidak semestinya.
+
+**Rekomendasi mitigasi:**
+
+- Terapkan allowlist ekstensi file.
+- Validasi MIME type dan signature file.
+- Batasi ukuran file yang dapat diunggah.
+- Simpan file di luar direktori publik apabila memungkinkan.
+- Hindari memberikan izin eksekusi pada direktori penyimpanan file.
+
+---
+
+## 📊 Status Pengujian
+
+| Vulnerability | Endpoint | Status |
+|---|---|---|
+| SQL Injection | `/login` | Perlu verifikasi hasil autentikasi |
+| Command Injection | `/panel/server` | Fitur eksekusi command tersedia; injeksi perlu diverifikasi |
+| IDOR | `/profile/{nim}` | Perlu verifikasi kontrol akses |
+| Broken Access Control | `/panel` | Dapat diakses tanpa login admin |
+| Broken Access Control | `/panel/server` | Dapat diakses tanpa login admin |
+| Unrestricted File Upload | Fitur unggah file | Perlu pengujian |
 
 ## 🎯 Tujuan Pengujian
 
@@ -111,53 +211,11 @@ Kerentanan yang terjadi ketika aplikasi menerima file tanpa validasi jenis, ukur
 2. Menguji efektivitas autentikasi dan otorisasi berdasarkan role.
 3. Memeriksa perlindungan terhadap akses data pengguna lain.
 4. Mengevaluasi validasi input dan keamanan unggah file.
-5. Mendokumentasikan hasil pengujian dan rekomendasi mitigasi.
+5. Menguji keamanan fitur eksekusi perintah sistem.
+6. Mendokumentasikan hasil pengujian dan rekomendasi mitigasi.
 
 ## ⚠️ Disclaimer
 
 Proyek ini dibuat untuk tujuan edukasi dan pengujian keamanan pada lingkungan yang terkontrol. Seluruh pengujian harus dilakukan hanya pada aplikasi dan sistem yang memiliki izin pengujian.
 
-# SEC APP — Vulnerability Findings
-
-## 1. SQL Injection
-
-**Endpoint:** `/login`
-
-**Deskripsi:**  
-Proses autentikasi diduga rentan terhadap SQL Injection karena input pengguna dapat memengaruhi logika query SQL.
-
-**Temuan:**
-- Pengujian menggunakan pola `' OR '1'='1` pada input login.
-- Perlu verifikasi apakah manipulasi input dapat melewati autentikasi tanpa kredensial yang valid.
-
-**Rekomendasi mitigasi:**
-- Gunakan parameterized queries atau prepared statements.
-- Hindari menyusun query SQL secara langsung dari input pengguna.
-- Terapkan validasi input dan penanganan error yang aman.
-
-## 2. Insecure Direct Object Reference (IDOR)
-
-**Endpoint:** `/profile/{nim}`
-
-**Deskripsi:**  
-Halaman profil diduga memiliki kelemahan kontrol akses yang memungkinkan pengguna melihat data pengguna lain dengan mengganti NIM pada URL.
-
-**Temuan:**
-- Pengguna dapat mengubah parameter NIM pada URL.
-- Perlu verifikasi apakah aplikasi tetap menampilkan profil pengguna lain tanpa memeriksa hak akses.
-
-**Rekomendasi mitigasi:**
-- Verifikasi hak akses pada setiap permintaan profil.
-- Pastikan pengguna hanya dapat mengakses data yang diizinkan.
-- Terapkan pemeriksaan otorisasi di sisi server, bukan hanya menyembunyikan tautan di antarmuka.
-
-## 3. Status Pengujian
-
-| Vulnerability | Endpoint | Status |
-|---|---|---|
-| SQL Injection | `/login` | Perlu verifikasi hasil autentikasi |
-| IDOR | `/profile/{nim}` | Perlu verifikasi kontrol akses |
-
-## Catatan
-
-Dokumentasikan hasil pengujian berdasarkan respons aplikasi dan bukti yang diperoleh pada lingkungan pengujian yang memiliki izin. Hindari menyimpan password atau data pribadi pengguna lain dalam laporan.
+Hasil pengujian harus didokumentasikan berdasarkan respons aplikasi dan bukti yang diperoleh. Hindari menyimpan password atau data pribadi pengguna lain dalam laporan.
