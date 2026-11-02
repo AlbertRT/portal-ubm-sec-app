@@ -1,39 +1,102 @@
 import Link from "next/link";
-import {logout} from "@/app/action/auth/action";
+import { logout } from "@/app/action/auth/action";
 
 interface SidebarProps {
-    username: string
+  username?: string;
+  role: "admin" | "student" | "lecturer";
 }
 
-export default function SideBar({ username }: SidebarProps) {
-    return (
-        <div className="w-full h-full py-10 px-3 bg-gradient-to-b from-gray-100 to-gray-200">
-            <div>
-                <ul className="space-y-1">
-                    <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
-                        <Link href="/" className="w-full font-bold h-full px-2 text-white">Home</Link>
-                    </li>
-                    <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
-                        <Link href={`/profile/${username}`} className="w-full font-bold h-full px-2 text-white">Profile</Link>
-                    </li>
-                </ul>
-            </div>
-            <div className="mt-10">
-                <ul className="space-y-1">
-                    <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
-                        <Link href="/tugas" className="w-full font-bold h-full px-2 text-white">Tugas</Link>
-                    </li>
-                </ul>
-            </div>
-            <div className="mt-10">
-                <form action={logout}>
-                    <ul className="space-y-1">
-                        <li className="bg-gradient-to-b from-red-700 to-red-600 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-red-500 hover:to-red-400">
-                            <button className="w-full font-bold h-full px-2 text-white cursor-pointer">Logout</button>
-                        </li>
-                    </ul>
-                </form>
-            </div>      
+export default function SideBar({ username, role }: SidebarProps) {
+  const homeLink = role === "admin" ? "/panel" : "/";
+
+  return (
+    <div className="w-full h-full py-10 px-3 bg-gradient-to-b from-gray-100 to-gray-200">
+      <div>
+        <ul className="space-y-1">
+          <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
+            <Link
+              href={homeLink}
+              className="w-full font-bold h-full px-2 text-white"
+            >
+              Home
+            </Link>
+          </li>
+          {role != "admin" && (
+            <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
+              <Link
+                href={`/profile/${username}`}
+                className="w-full font-bold h-full px-2 text-white"
+              >
+                Profile
+              </Link>
+            </li>
+          )}
+        </ul>
+      </div>
+      {role != "admin" && (
+        <div className="mt-10">
+          <ul className="space-y-1">
+            <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
+              <Link
+                href="/tugas"
+                className="w-full font-bold h-full px-2 text-white"
+              >
+                Tugas
+              </Link>
+            </li>
+          </ul>
         </div>
-    )
+      )}
+      {role === "admin" && (
+        <div className="mt-10">
+          <ul className="space-y-1">
+            <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
+              <Link
+                href="/panel/users"
+                className="w-full font-bold h-full px-2 text-white"
+              >
+                Manage Users
+              </Link>
+            </li>
+            <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
+              <Link
+                href="/panel/students"
+                className="w-full font-bold h-full px-2 text-white"
+              >
+                Manage Students
+              </Link>
+            </li>
+            <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
+              <Link
+                href="/panel/lecturers"
+                className="w-full font-bold h-full px-2 text-white"
+              >
+                Manage Lecturers
+              </Link>
+            </li>
+            <li className="bg-gradient-to-b from-blue-700 to-blue-500 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-blue-500 hover:to-blue-400">
+              <Link
+                href="/panel/server"
+                className="w-full font-bold h-full px-2 text-white"
+              >
+                Manage Server
+              </Link>
+            </li>
+          </ul>
+        </div>
+      )}
+
+      <div className="mt-10">
+        <form action={logout}>
+          <ul className="space-y-1">
+            <li className="bg-gradient-to-b from-red-700 to-red-600 w-full h-7 flex items-center hover:bg-gradient-to-b hover:from-red-500 hover:to-red-400">
+              <button className="w-full font-bold h-full px-2 text-white cursor-pointer">
+                Logout
+              </button>
+            </li>
+          </ul>
+        </form>
+      </div>
+    </div>
+  );
 }

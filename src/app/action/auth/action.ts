@@ -18,16 +18,16 @@ export async function login(
     const username = formData.get("username");
     const password = formData.get("password");
 
-    // if (
-    //     typeof username !== "string" ||
-    //     typeof password !== "string" ||
-    //     username.length < 1 ||
-    //     username.length > 10 ||
-    //     password.length < 1 ||
-    //     password.length > 72
-    // ) {
-    //     return { error: "Username atau password tidak valid." };
-    // }
+    if (
+        typeof username !== "string" ||
+        typeof password !== "string" ||
+        username.length < 1 ||
+        username.length > 10 ||
+        password.length < 1 ||
+        password.length > 72
+    ) {
+        return { error: "Username atau password tidak valid." };
+    }
 
     // Autentikasi normal menggunakan parameterized query.
     const result = await pool.query(
@@ -40,9 +40,9 @@ export async function login(
 
     const user = result.rows[0];
 
-    // if (!user || !(await bcrypt.compare(password, user.password))) {
-    //     return { error: "Username atau password salah." };
-    // }
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+        return { error: "Username atau password salah." };
+    }
 
     const secret = process.env.JWT_SECRET;
 
@@ -58,6 +58,7 @@ export async function login(
         .setIssuedAt()
         .setExpirationTime("2h")
         .sign(new TextEncoder().encode(secret));
+    
 
     const cookieStore = await cookies();
 
@@ -68,6 +69,11 @@ export async function login(
         path: "/",
         maxAge: 60 * 60 * 2,
     });
+
+
+    if (user.role === "admin") {
+        redirect("/panel")
+    }
 
     redirect("/");
 }

@@ -98,5 +98,16 @@ export async function getSession(): Promise<Session | null> {
         return session;
     }
 
+    if (user.role === "admin") {
+        const session: Session = {
+            id: user.id,
+            username: user.username,
+            role: "admin",
+            profile: {},
+        };
+
+        return session;
+    }
+
     return null;
 }

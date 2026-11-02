@@ -26,7 +26,7 @@ export default async function RootLayout({children}: Readonly<{
         <div className="flex h-screen w-full flex-col">
             <div className="flex h-full w-full flex-row">
                 <div className="h-full w-[250px]">
-                    <SideBar username={session.username}/>
+                    <SideBar username={session.username} role={session.role}/>
                 </div>
 
                 <main className="h-full flex-1 overflow-y-auto">

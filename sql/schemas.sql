@@ -78,14 +78,15 @@ CREATE TABLE uploaded_files
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE lecturers
-    ADD COLUMN course_id BIGINT REFERENCES courses(id);
+ALTER TABLE lecturers ADD COLUMN course_id BIGINT REFERENCES courses(id);
 
-ALTER TABLE courses
-    ADD COLUMN major_id BIGINT REFERENCES majors(id);
+ALTER TABLE courses ADD COLUMN major_id BIGINT REFERENCES majors(id);
 
-ALTER TABLE assignments
-    DROP COLUMN title
+ALTER TABLE assignments DROP COLUMN title;
 
-ALTER TABLE assignments
-    DROP COLUMN description
+ALTER TABLE assignments DROP COLUMN description;
+
+ALTER TABLE users
+    DROP CONSTRAINT users_role_check,
+    ADD CONSTRAINT users_role_check
+        CHECK (role IN ('student', 'lecturer', 'admin'));

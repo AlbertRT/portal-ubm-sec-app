@@ -22,7 +22,15 @@ export type LecturerSession = {
     profile: LecturerProfile;
 };
 
-export type Session = StudentSession | LecturerSession;
+export type AdminSession = {
+    id: number;
+    username: string;
+    role: "admin";
+    profile: {};
+};
+
+
+export type Session = StudentSession | LecturerSession | AdminSession;
 
 export type StudentDetail = {
     id: number;
